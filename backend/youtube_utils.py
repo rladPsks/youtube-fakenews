@@ -1,5 +1,14 @@
+import os
 import re
-from youtube_transcript_api import YouTubeTranscriptApi
+import glob
+import subprocess
+from pathlib import Path
+
+
+PROXY_URL = os.getenv(
+    "PROXY_URL",
+    "http://qllyfnqs-kr-1:lnpl06rmksdc@p.webshare.io:80"
+)
 
 
 def extract_video_id(url: str) -> str:
@@ -17,16 +26,71 @@ def extract_video_id(url: str) -> str:
     return url.strip()
 
 
+def clean_vtt(vtt_path: str) -> str:
+    with open(vtt_path, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+
+    cleaned = []
+    prev = None
+
+    for line in lines:
+        line = line.strip()
+
+        if not line:
+            continue
+        if line.startswith("WEBVTT"):
+            continue
+        if "-->" in line:
+            continue
+        if line.startswith("Kind:") or line.startswith("Language:"):
+            continue
+
+        line = re.sub(r"<[^>]+>", "", line)
+        line = re.sub(r"&nbsp;", " ", line)
+        line = line.strip()
+
+        if line and line != prev:
+            cleaned.append(line)
+            prev = line
+
+    return " ".join(cleaned).strip()
+
+
 def get_transcript(video_id: str) -> str:
     try:
-        api = YouTubeTranscriptApi()
+        tmp_dir = Path("tmp_subs")
+        tmp_dir.mkdir(exist_ok=True)
 
-        transcript = api.fetch(
-            video_id,
-            languages=["ko", "en"]
+        video_url = f"https://www.youtube.com/watch?v={video_id}"
+
+        cmd = [
+            "yt-dlp",
+            "--proxy", PROXY_URL,
+            "--write-auto-sub",
+            "--write-sub",
+            "--sub-lang", "ko,en",
+            "--skip-download",
+            "-o", str(tmp_dir / "%(id)s.%(ext)s"),
+            video_url,
+        ]
+
+        subprocess.run(
+            cmd,
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
         )
 
-        text = " ".join([item.text for item in transcript]).strip()
+        vtt_files = glob.glob(str(tmp_dir / f"{video_id}*.vtt"))
+
+        if not vtt_files:
+            raise RuntimeError("NO_VTT_SUBTITLE_FOUND")
+
+        ko_files = [f for f in vtt_files if f.endswith(".ko.vtt")]
+        selected = ko_files[0] if ko_files else vtt_files[0]
+
+        text = clean_vtt(selected)
 
         if not text:
             raise RuntimeError("NO_TRANSCRIPT_EMPTY")
@@ -34,5 +98,5 @@ def get_transcript(video_id: str) -> str:
         return text
 
     except Exception as e:
-        print("[TRANSCRIPT ERROR]", repr(e), flush=True)
+        print("[YTDLP TRANSCRIPT ERROR]", repr(e), flush=True)
         raise RuntimeError(f"NO_TRANSCRIPT: {repr(e)}")
