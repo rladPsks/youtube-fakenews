@@ -66,6 +66,7 @@ def get_transcript(video_id: str) -> str:
         cmd = [
             "yt-dlp",
             "--proxy", PROXY_URL,
+            "--force-overwrites",
             "--write-auto-sub",
             "--write-sub",
             "--sub-lang", "ko,en",
@@ -96,6 +97,14 @@ def get_transcript(video_id: str) -> str:
             raise RuntimeError("NO_TRANSCRIPT_EMPTY")
 
         return text
+
+        except subprocess.CalledProcessError as e:
+        print("[YTDLP TRANSCRIPT ERROR]", flush=True)
+        print("returncode:", e.returncode, flush=True)
+        print("cmd:", e.cmd, flush=True)
+        print("stdout:", e.stdout, flush=True)
+        print("stderr:", e.stderr, flush=True)
+        raise RuntimeError(f"NO_TRANSCRIPT: {e.stderr}")
 
     except Exception as e:
         print("[YTDLP TRANSCRIPT ERROR]", repr(e), flush=True)
