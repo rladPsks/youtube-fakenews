@@ -14,7 +14,7 @@ function App() {
   setResult(null);
 
   try {
-    const response = await fetch("http://localhost:8000/analyze", {
+    const response = await fetch("https://vufs74u0wvye47-8000.proxy.runpod.net/analyze", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
