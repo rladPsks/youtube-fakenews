@@ -9,6 +9,7 @@ app = FastAPI(title="Korean YouTube Fake News Detector")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -29,7 +30,7 @@ def analyze(req: AnalyzeRequest):
     except RuntimeError as e:
         code = str(e)
 
-        if code == "NO_TRANSCRIPT":
+        if code.startswith("NO_TRANSCRIPT"):
             raise HTTPException(
                 status_code=400,
                 detail="이 영상은 사용할 수 있는 자막이 없습니다."

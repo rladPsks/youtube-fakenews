@@ -20,13 +20,19 @@ def extract_video_id(url: str) -> str:
 def get_transcript(video_id: str) -> str:
     try:
         api = YouTubeTranscriptApi()
-        transcript = api.fetch(video_id, languages=["ko", "en"])
+
+        transcript = api.fetch(
+            video_id,
+            languages=["ko", "en"]
+        )
+
         text = " ".join([item.text for item in transcript]).strip()
 
         if not text:
-            raise RuntimeError("NO_TRANSCRIPT")
+            raise RuntimeError("NO_TRANSCRIPT_EMPTY")
 
         return text
 
-    except Exception:
-        raise RuntimeError("NO_TRANSCRIPT")
+    except Exception as e:
+        print("[TRANSCRIPT ERROR]", repr(e), flush=True)
+        raise RuntimeError(f"NO_TRANSCRIPT: {repr(e)}")
