@@ -75,13 +75,16 @@ def get_transcript(video_id: str) -> str:
             video_url,
         ]
 
-        subprocess.run(
+        result = subprocess.run(
             cmd,
             check=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
         )
+
+        print("[YTDLP STDOUT]", result.stdout, flush=True)
+        print("[YTDLP STDERR]", result.stderr, flush=True)
 
         vtt_files = glob.glob(str(tmp_dir / f"{video_id}*.vtt"))
 
@@ -98,7 +101,7 @@ def get_transcript(video_id: str) -> str:
 
         return text
 
-        except subprocess.CalledProcessError as e:
+    except subprocess.CalledProcessError as e:
         print("[YTDLP TRANSCRIPT ERROR]", flush=True)
         print("returncode:", e.returncode, flush=True)
         print("cmd:", e.cmd, flush=True)
@@ -107,5 +110,5 @@ def get_transcript(video_id: str) -> str:
         raise RuntimeError(f"NO_TRANSCRIPT: {e.stderr}")
 
     except Exception as e:
-        print("[YTDLP TRANSCRIPT ERROR]", repr(e), flush=True)
+        print("[YTDLP UNKNOWN ERROR]", repr(e), flush=True)
         raise RuntimeError(f"NO_TRANSCRIPT: {repr(e)}")
