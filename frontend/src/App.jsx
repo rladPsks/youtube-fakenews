@@ -1,6 +1,8 @@
 import { useState } from "react";
 import "./App.css";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 function App() {
   const [url, setUrl] = useState("");
   const [result, setResult] = useState(null);
@@ -8,41 +10,41 @@ function App() {
   const [expanded, setExpanded] = useState(false);
 
   const analyzeVideo = async () => {
-  if (!url.trim()) return;
+    if (!url.trim()) return;
 
-  setLoading(true);
-  setResult(null);
+    setLoading(true);
+    setResult(null);
 
-  try {
-    const response = await fetch("https://vufs74u0wvye47-8000.proxy.runpod.net/analyze", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ url }),
-    });
+    try {
+      const response = await fetch(`${API_URL}/analyze`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ url }),
+      });
 
-    if (!response.ok) {
-      let message = "분석 요청 실패";
+      if (!response.ok) {
+        let message = "분석 요청 실패";
 
-      try {
-        const errorData = await response.json();
-        message = errorData.detail || message;
-      } catch {
-        message = "서버 응답을 읽을 수 없습니다.";
+        try {
+          const errorData = await response.json();
+          message = errorData.detail || message;
+        } catch {
+          message = "서버 응답을 읽을 수 없습니다.";
+        }
+
+        throw new Error(message);
       }
 
-      throw new Error(message);
+      const data = await response.json();
+      setResult(data);
+    } catch (err) {
+      alert(err.message || "분석 실패: backend 서버 또는 URL을 확인해주세요.");
+    } finally {
+      setLoading(false);
     }
-
-    const data = await response.json();
-    setResult(data);
-  } catch (err) {
-    alert(err.message || "분석 실패: backend 서버 또는 URL을 확인해주세요.");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const predictionClass = result?.prediction === "REAL" ? "real" : "fake";
 
