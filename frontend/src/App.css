@@ -427,5 +427,26 @@ body {
 
   .topbar {
     padding: 0 18px;
-  }
+  } 
+}
+
+
+.alpha-card.selected {
+  border-color: #86efac;
+  box-shadow: 0 0 0 1px rgba(134, 239, 172, 0.4);
+}
+
+.alpha-card.selected .alpha-top span:first-child {
+  color: #86efac;
+  font-weight: 700;
+}
+
+.alpha-card {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.alpha-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(134, 239, 172, 0.3);
 }
