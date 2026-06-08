@@ -92,7 +92,7 @@ function App() {
     : "선택한 기준에서 AI의 최종 예측을 바로 제공하기 어렵다고 판단했습니다.";
 
   const predictionText =
-    result?.prediction === "REAL" ? "사실 기반 가능성 높음" : "허위 정보 가능성 높음";
+    result?.prediction === "REAL" ? "사실 기반일 가능성 높음" : "허위 정보일 가능성 높음";
 
   return (
     <div className="app">
@@ -237,9 +237,8 @@ function App() {
                 </div>
 
                 <div className="metric-grid public-metrics">
-                  <Metric title="허위 가능성 비율" value={result.p0} />
-                  <Metric title="사실 기반 비율" value={result.p1} />
-                  <Metric title="AI 판단 신뢰도" value={result.confidence} />
+                  <Metric title="사실이라고 판정한 비율" value={result.p0} />
+                  <Metric title="허위라고 판정한 비율" value={result.p1} />
                 </div>
               </>
             )}
