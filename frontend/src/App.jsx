@@ -8,12 +8,15 @@ function App() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [showPrediction, setShowPrediction] = useState(false);
 
   const analyzeVideo = async () => {
     if (!url.trim()) return;
 
     setLoading(true);
     setResult(null);
+    setShowPrediction(false);
+    setExpanded(false);
 
     try {
       const response = await fetch(`${API_URL}/analyze`, {
@@ -39,6 +42,8 @@ function App() {
 
       const data = await response.json();
       setResult(data);
+      setShowPrediction(false);
+      setExpanded(false);
     } catch (err) {
       alert(err.message || "분석 실패: backend 서버 또는 URL을 확인해주세요.");
     } finally {
@@ -47,6 +52,8 @@ function App() {
   };
 
   const predictionClass = result?.prediction === "REAL" ? "real" : "fake";
+  const primaryFacttest = result?.facttest?.[0];
+  const isAccepted = primaryFacttest?.decision === "ACCEPT";
 
   return (
     <div className="app">
@@ -80,7 +87,7 @@ function App() {
             <h2>영상을 분석해보세요</h2>
             <p>
               YouTube URL을 입력하면 Qwen LLM이 7회 판단하고, FACTTEST 기반
-              신뢰성 검정으로 답변 여부를 결정합니다.
+              신뢰성 검정으로 답변 여부를 먼저 결정합니다.
             </p>
           </section>
         )}
@@ -98,43 +105,96 @@ function App() {
 
         {result && (
           <section className="results">
-            <div className={`prediction-card ${predictionClass}`}>
+            <div className={`prediction-card ${isAccepted ? "real" : "fake"}`}>
               <div className="prediction-left">
-                <div className="prediction-icon">
-                  {result.prediction === "REAL" ? "✓" : "!"}
-                </div>
+                <div className="prediction-icon">{isAccepted ? "✓" : "!"}</div>
                 <div>
-                  <p className="small-label">최종 예측</p>
-                  <h2>{result.prediction}</h2>
+                  <p className="small-label">FACTTEST 신뢰성 검정 결과</p>
+                  <h2>{primaryFacttest?.decision ?? "UNKNOWN"}</h2>
                   <p className="muted">
-                    {result.prediction === "REAL"
-                      ? "이 영상은 사실 기반 콘텐츠로 판단됩니다."
-                      : "이 영상은 허위 정보 가능성이 높습니다."}
+                    {isAccepted
+                      ? "이 Qwen 답변은 FACTTEST 기준을 통과하여 공개 가능한 답변으로 판단됩니다."
+                      : "이 Qwen 답변은 FACTTEST 기준을 통과하지 못해 최종 판정을 보류합니다."}
                   </p>
                 </div>
               </div>
 
               <div className="prediction-right">
-                <p className="small-label">Video ID</p>
-                <strong>{result.video_id}</strong>
+                <p className="small-label">FACTTEST score</p>
+                <strong>{primaryFacttest?.score ?? "-"}</strong>
+                <p className="tau">tau: {primaryFacttest?.tau ?? "-"}</p>
               </div>
             </div>
 
-            <div className="reason-card">
-              <p className="small-label">대표 판단 이유</p>
-              <p>{result.representative_reason}</p>
-            </div>
+            {!isAccepted && (
+              <div className="reason-card">
+                <p className="small-label">판정 보류 안내</p>
+                <p>
+                  이 영상은 Qwen의 REAL/FAKE 예측을 신뢰하기 어렵다고 판단되어
+                  최종 예측 결과를 공개하지 않습니다. FACTTEST의 목적은 모델의
+                  답변을 무조건 제공하는 것이 아니라, 신뢰 가능한 경우에만
+                  답변을 수용하는 것입니다.
+                </p>
+              </div>
+            )}
 
-            <div className="metric-grid">
-              <Metric title="p0" value={result.p0} />
-              <Metric title="p1" value={result.p1} />
-              <Metric title="confidence" value={result.confidence} />
-              <Metric title="entropy" value={result.entropy} />
-              <Metric
-                title="FACTTEST score"
-                value={result.facttest_features?.facttest_score}
-              />
-            </div>
+            {isAccepted && !showPrediction && (
+              <div className="reason-card">
+                <p className="small-label">다음 단계</p>
+                <p>
+                  FACTTEST가 이 답변을 ACCEPT했습니다. 아래 버튼을 누르면
+                  Qwen의 최종 REAL/FAKE 예측 결과를 확인할 수 있습니다.
+                </p>
+                <button
+                  className="accordion-btn"
+                  onClick={() => setShowPrediction(true)}
+                >
+                  AI 예측 결과 보기
+                </button>
+              </div>
+            )}
+
+            {isAccepted && showPrediction && (
+              <>
+                <div className={`prediction-card ${predictionClass}`}>
+                  <div className="prediction-left">
+                    <div className="prediction-icon">
+                      {result.prediction === "REAL" ? "✓" : "!"}
+                    </div>
+                    <div>
+                      <p className="small-label">Qwen 최종 예측</p>
+                      <h2>{result.prediction}</h2>
+                      <p className="muted">
+                        {result.prediction === "REAL"
+                          ? "이 영상은 사실 기반 콘텐츠로 판단됩니다."
+                          : "이 영상은 허위 정보 가능성이 높습니다."}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="prediction-right">
+                    <p className="small-label">Video ID</p>
+                    <strong>{result.video_id}</strong>
+                  </div>
+                </div>
+
+                <div className="reason-card">
+                  <p className="small-label">대표 판단 이유</p>
+                  <p>{result.representative_reason}</p>
+                </div>
+
+                <div className="metric-grid">
+                  <Metric title="p0" value={result.p0} />
+                  <Metric title="p1" value={result.p1} />
+                  <Metric title="confidence" value={result.confidence} />
+                  <Metric title="entropy" value={result.entropy} />
+                  <Metric
+                    title="FACTTEST score"
+                    value={result.facttest_features?.facttest_score}
+                  />
+                </div>
+              </>
+            )}
 
             <div className="feature-card">
               <h3>FACTTEST Features</h3>
@@ -192,28 +252,30 @@ function App() {
               </div>
             </div>
 
-            <div className="reason-list-card">
-              <button
-                className="accordion-btn"
-                onClick={() => setExpanded(!expanded)}
-              >
-                Qwen 7회 reasoning 보기 {expanded ? "▲" : "▼"}
-              </button>
+            {isAccepted && showPrediction && (
+              <div className="reason-list-card">
+                <button
+                  className="accordion-btn"
+                  onClick={() => setExpanded(!expanded)}
+                >
+                  Qwen 7회 reasoning 보기 {expanded ? "▲" : "▼"}
+                </button>
 
-              {expanded && (
-                <ol className="reason-list">
-                  {result.all_outputs.map((item, idx) => (
-                    <li key={idx}>
-                      <span className="reason-index">{idx + 1}</span>
-                      <div>
-                        <strong>{item.label_name}</strong>
-                        <p>{item.reason}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              )}
-            </div>
+                {expanded && (
+                  <ol className="reason-list">
+                    {result.all_outputs.map((item, idx) => (
+                      <li key={idx}>
+                        <span className="reason-index">{idx + 1}</span>
+                        <div>
+                          <strong>{item.label_name}</strong>
+                          <p>{item.reason}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </div>
+            )}
 
             <p className="disclaimer">
               ⚠️ 이 분석 결과는 AI 기반 자동 판별 시스템에 의해 생성되었습니다.
