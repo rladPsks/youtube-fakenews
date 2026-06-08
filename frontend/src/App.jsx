@@ -3,12 +3,31 @@ import "./App.css";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+const alphaOptions = [
+  {
+    label: "표준",
+    value: 0.2,
+    description: "더 많은 답변을 공개하는 기본 기준입니다.",
+  },
+  {
+    label: "엄격",
+    value: 0.1,
+    description: "신뢰성과 답변 공개율의 균형을 맞춥니다.",
+  },
+  {
+    label: "매우 엄격",
+    value: 0.05,
+    description: "매우 확실한 답변만 공개합니다.",
+  },
+];
+
 function App() {
   const [url, setUrl] = useState("");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [showPrediction, setShowPrediction] = useState(false);
+  const [selectedAlpha, setSelectedAlpha] = useState(0.2);
 
   const analyzeVideo = async () => {
     if (!url.trim()) return;
@@ -17,6 +36,7 @@ function App() {
     setResult(null);
     setShowPrediction(false);
     setExpanded(false);
+    setSelectedAlpha(0.2);
 
     try {
       const response = await fetch(`${API_URL}/analyze`, {
@@ -52,7 +72,11 @@ function App() {
   };
 
   const predictionClass = result?.prediction === "REAL" ? "real" : "fake";
-  const primaryFacttest = result?.facttest?.[0];
+
+  const primaryFacttest =
+    result?.facttest?.find((item) => Number(item.alpha) === selectedAlpha) ||
+    result?.facttest?.[0];
+
   const isAccepted = primaryFacttest?.decision === "ACCEPT";
 
   return (
@@ -105,6 +129,33 @@ function App() {
 
         {result && (
           <section className="results">
+            <div className="feature-card">
+              <h3>FACTTEST 신뢰성 기준</h3>
+              <div className="alpha-grid">
+                {alphaOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    className={
+                      selectedAlpha === option.value
+                        ? "alpha-card selected"
+                        : "alpha-card"
+                    }
+                    onClick={() => {
+                      setSelectedAlpha(option.value);
+                      setShowPrediction(false);
+                      setExpanded(false);
+                    }}
+                  >
+                    <div className="alpha-top">
+                      <span>{option.label}</span>
+                      <span className="badge accept">α = {option.value}</span>
+                    </div>
+                    <p className="muted">{option.description}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className={`prediction-card ${isAccepted ? "real" : "fake"}`}>
               <div className="prediction-left">
                 <div className="prediction-icon">{isAccepted ? "✓" : "!"}</div>
@@ -113,13 +164,21 @@ function App() {
                   <h2>{primaryFacttest?.decision ?? "UNKNOWN"}</h2>
                   <p className="muted">
                     {isAccepted
-                      ? "이 Qwen 답변은 FACTTEST 기준을 통과하여 공개 가능한 답변으로 판단됩니다."
-                      : "이 Qwen 답변은 FACTTEST 기준을 통과하지 못해 최종 판정을 보류합니다."}
+                      ? "이 Qwen 답변은 현재 선택한 FACTTEST 기준을 통과하여 공개 가능한 답변으로 판단됩니다."
+                      : "이 Qwen 답변은 현재 선택한 FACTTEST 기준을 통과하지 못해 최종 판정을 보류합니다."}
                   </p>
                 </div>
               </div>
 
               <div className="prediction-right">
+                <p className="small-label">선택 기준</p>
+                <strong>
+                  {
+                    alphaOptions.find((option) => option.value === selectedAlpha)
+                      ?.label
+                  }
+                </strong>
+                <p className="tau">α = {selectedAlpha}</p>
                 <p className="small-label">FACTTEST score</p>
                 <strong>{primaryFacttest?.score ?? "-"}</strong>
                 <p className="tau">tau: {primaryFacttest?.tau ?? "-"}</p>
