@@ -7,17 +7,17 @@ const alphaOptions = [
   {
     label: "표준",
     value: 0.2,
-    description: "더 많은 답변을 공개하는 기본 기준입니다.",
+    description: "더 많은 답변을 제공하는 기본 기준입니다.",
   },
   {
     label: "엄격",
     value: 0.15,
-    description: "신뢰성과 답변 공개율의 균형을 맞춥니다.",
+    description: "신뢰성과 답변 제공률의 균형을 맞춥니다.",
   },
   {
     label: "매우 엄격",
     value: 0.05,
-    description: "매우 확실한 답변만 공개합니다.",
+    description: "매우 확실한 경우에만 답변을 제공합니다.",
   },
 ];
 
@@ -27,6 +27,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [showPrediction, setShowPrediction] = useState(false);
+  const [showTechInfo, setShowTechInfo] = useState(false);
   const [selectedAlpha, setSelectedAlpha] = useState(0.2);
 
   const analyzeVideo = async () => {
@@ -34,8 +35,9 @@ function App() {
 
     setLoading(true);
     setResult(null);
-    setShowPrediction(false);
     setExpanded(false);
+    setShowPrediction(false);
+    setShowTechInfo(false);
     setSelectedAlpha(0.2);
 
     try {
@@ -62,8 +64,9 @@ function App() {
 
       const data = await response.json();
       setResult(data);
-      setShowPrediction(false);
       setExpanded(false);
+      setShowPrediction(false);
+      setShowTechInfo(false);
     } catch (err) {
       alert(err.message || "분석 실패: backend 서버 또는 URL을 확인해주세요.");
     } finally {
@@ -71,13 +74,27 @@ function App() {
     }
   };
 
-  const predictionClass = result?.prediction === "REAL" ? "real" : "fake";
+  const selectedOption =
+    alphaOptions.find((option) => option.value === selectedAlpha) ||
+    alphaOptions[0];
 
   const primaryFacttest =
     result?.facttest?.find((item) => Number(item.alpha) === selectedAlpha) ||
     result?.facttest?.[0];
 
   const isAccepted = primaryFacttest?.decision === "ACCEPT";
+  const predictionClass = result?.prediction === "REAL" ? "real" : "fake";
+
+  const userDecisionText = isAccepted
+    ? "답변을 수용합니다."
+    : "답변을 보류합니다.";
+
+  const userDecisionDescription = isAccepted
+    ? "선택한 기준에서 AI 답변을 제공해도 된다고 판단했습니다."
+    : "선택한 기준에서 AI 답변을 바로 제공하기 어렵다고 판단했습니다.";
+
+  const predictionText =
+    result?.prediction === "REAL" ? "사실 기반 가능성 높음" : "허위 정보 가능성 높음";
 
   return (
     <div className="app">
@@ -110,8 +127,8 @@ function App() {
             <div className="shield">🛡</div>
             <h2>영상을 분석해보세요</h2>
             <p>
-              YouTube URL을 입력하면 Qwen LLM이 7회 판단하고, FACTTEST 기반
-              신뢰성 검정으로 답변 여부를 먼저 결정합니다.
+              YouTube URL을 입력하면 AI가 여러 번 판단하고, 신뢰도 기준을
+              적용해 답변 제공 여부를 먼저 결정합니다.
             </p>
           </section>
         )}
@@ -121,8 +138,7 @@ function App() {
             <div className="loader" />
             <h2>분석 중입니다</h2>
             <p>
-              자막 추출, Qwen 7회 추론, Gradient Boosting FACTTEST를 수행하고
-              있습니다.
+              자막 추출, AI 반복 판단, 신뢰도 검정을 수행하고 있습니다.
             </p>
           </section>
         )}
@@ -130,8 +146,8 @@ function App() {
         {result && (
           <section className="results">
             <div className="feature-card">
-              <h3>FACTTEST 신뢰성 기준</h3>
-              <div className="alpha-grid">
+              <h3>답변 제공 기준 선택</h3>
+              <div className="alpha-grid three-options">
                 {alphaOptions.map((option) => (
                   <button
                     key={option.value}
@@ -145,11 +161,11 @@ function App() {
                       setSelectedAlpha(option.value);
                       setShowPrediction(false);
                       setExpanded(false);
+                      setShowTechInfo(false);
                     }}
                   >
                     <div className="alpha-top">
                       <span>{option.label}</span>
-                      <span className="badge accept">α = {option.value}</span>
                     </div>
                     <p className="muted">{option.description}</p>
                   </button>
@@ -161,28 +177,15 @@ function App() {
               <div className="prediction-left">
                 <div className="prediction-icon">{isAccepted ? "✓" : "!"}</div>
                 <div>
-                  <p className="small-label">FACTTEST 신뢰성 검정 결과</p>
-                  <h2>{primaryFacttest?.decision ?? "UNKNOWN"}</h2>
-                  <p className="muted">
-                    {isAccepted
-                      ? "이 Qwen 답변은 현재 선택한 FACTTEST 기준을 통과하여 공개 가능한 답변으로 판단됩니다."
-                      : "이 Qwen 답변은 현재 선택한 FACTTEST 기준을 통과하지 못해 최종 판정을 보류합니다."}
-                  </p>
+                  <p className="small-label">AI 답변 제공 여부</p>
+                  <h2>{userDecisionText}</h2>
+                  <p className="muted">{userDecisionDescription}</p>
                 </div>
               </div>
 
               <div className="prediction-right">
-                <p className="small-label">선택 기준</p>
-                <strong>
-                  {
-                    alphaOptions.find((option) => option.value === selectedAlpha)
-                      ?.label
-                  }
-                </strong>
-                <p className="tau">α = {selectedAlpha}</p>
-                <p className="small-label">FACTTEST score</p>
-                <strong>{primaryFacttest?.score ?? "-"}</strong>
-                <p className="tau">tau: {primaryFacttest?.tau ?? "-"}</p>
+                <p className="small-label">선택한 기준</p>
+                <strong>{selectedOption.label}</strong>
               </div>
             </div>
 
@@ -190,9 +193,9 @@ function App() {
               <div className="reason-card">
                 <p className="small-label">판정 보류 안내</p>
                 <p>
-                  이 영상은 Qwen의 최종 REAL/FAKE 예측을 신뢰하기 어렵다고
-                  판단되어 최종 예측 결과를 공개하지 않습니다. 다만 아래에서
-                  Qwen이 7회 생성한 개별 판단과 reasoning은 확인할 수 있습니다.
+                  이 영상은 현재 선택한 기준에서 AI의 최종 예측을 바로 신뢰하기
+                  어렵다고 판단되어 결과 공개를 보류합니다. 아래에서 AI가 여러 번
+                  판단한 상세 이유는 확인할 수 있습니다.
                 </p>
               </div>
             )}
@@ -201,8 +204,8 @@ function App() {
               <div className="reason-card">
                 <p className="small-label">다음 단계</p>
                 <p>
-                  FACTTEST가 이 답변을 ACCEPT했습니다. 아래 버튼을 누르면
-                  Qwen의 최종 REAL/FAKE 예측 결과를 확인할 수 있습니다.
+                  선택한 기준에서 AI 답변을 제공할 수 있다고 판단했습니다. 아래
+                  버튼을 누르면 최종 예측 결과를 확인할 수 있습니다.
                 </p>
                 <button
                   className="accordion-btn"
@@ -221,12 +224,12 @@ function App() {
                       {result.prediction === "REAL" ? "✓" : "!"}
                     </div>
                     <div>
-                      <p className="small-label">Qwen 최종 예측</p>
-                      <h2>{result.prediction}</h2>
+                      <p className="small-label">AI 최종 예측</p>
+                      <h2>{predictionText}</h2>
                       <p className="muted">
                         {result.prediction === "REAL"
-                          ? "이 영상은 사실 기반 콘텐츠로 판단됩니다."
-                          : "이 영상은 허위 정보 가능성이 높습니다."}
+                          ? "이 영상은 사실 기반 콘텐츠일 가능성이 높다고 판단했습니다."
+                          : "이 영상은 허위 정보일 가능성이 높다고 판단했습니다."}
                       </p>
                     </div>
                   </div>
@@ -243,14 +246,9 @@ function App() {
                 </div>
 
                 <div className="metric-grid">
-                  <Metric title="p0" value={result.p0} />
-                  <Metric title="p1" value={result.p1} />
-                  <Metric title="confidence" value={result.confidence} />
-                  <Metric title="entropy" value={result.entropy} />
-                  <Metric
-                    title="FACTTEST score"
-                    value={result.facttest_features?.facttest_score}
-                  />
+                  <Metric title="FAKE 비율" value={result.p0} />
+                  <Metric title="REAL 비율" value={result.p1} />
+                  <Metric title="신뢰도" value={result.confidence} />
                 </div>
               </>
             )}
@@ -260,7 +258,7 @@ function App() {
                 className="accordion-btn"
                 onClick={() => setExpanded(!expanded)}
               >
-                Qwen 7회 개별 판단과 reasoning 보기 {expanded ? "▲" : "▼"}
+                AI가 7번 판단한 상세 이유 보기 {expanded ? "▲" : "▼"}
               </button>
 
               {expanded && (
@@ -270,10 +268,11 @@ function App() {
                       <span className="reason-index">{idx + 1}</span>
                       <div>
                         <strong>
-                          {item.label_name}{" "}
-                          {item.answer !== undefined && item.answer !== null
-                            ? `(answer=${item.answer})`
-                            : ""}
+                          {item.label_name === "REAL"
+                            ? "사실 기반"
+                            : item.label_name === "FAKE"
+                            ? "허위 가능성"
+                            : item.label_name}
                         </strong>
                         <p>{item.reason}</p>
                       </div>
@@ -284,59 +283,60 @@ function App() {
             </div>
 
             <div className="feature-card">
-              <h3>FACTTEST Features</h3>
-              <div className="metric-grid three">
-                <Metric
-                  title="answer_entropy"
-                  value={result.facttest_features?.answer_entropy}
-                />
-                <Metric
-                  title="tfidf_reason_mean"
-                  value={result.facttest_features?.tfidf_reason_mean}
-                />
-                <Metric
-                  title="facttest_score"
-                  value={result.facttest_features?.facttest_score}
-                />
-              </div>
-            </div>
+              <button
+                className="accordion-btn"
+                onClick={() => setShowTechInfo(!showTechInfo)}
+              >
+                상세 기술 정보 보기 {showTechInfo ? "▲" : "▼"}
+              </button>
 
-            <div className="facttest-card">
-              <h3>Alpha별 FACTTEST 결과</h3>
-              <div className="alpha-grid">
-                {result.facttest.map((item) => (
-                  <div className="alpha-card" key={item.alpha}>
-                    <div className="alpha-top">
-                      <span>α = {item.alpha}</span>
-                      <span
-                        className={
-                          item.decision === "ACCEPT"
-                            ? "badge accept"
-                            : "badge abstain"
-                        }
-                      >
-                        {item.decision}
-                      </span>
-                    </div>
-
-                    <div className="score-line">
-                      <p>score</p>
-                      <strong>{item.score}</strong>
-                    </div>
-
-                    <div className="bar-bg">
-                      <div
-                        className="bar-fill"
-                        style={{
-                          width: `${Math.min(item.score * 100, 100)}%`,
-                        }}
-                      />
-                    </div>
-
-                    <p className="tau">tau: {item.tau}</p>
+              {showTechInfo && (
+                <>
+                  <div className="metric-grid three">
+                    <Metric
+                      title="answer_entropy"
+                      value={result.facttest_features?.answer_entropy}
+                    />
+                    <Metric
+                      title="tfidf_reason_mean"
+                      value={result.facttest_features?.tfidf_reason_mean}
+                    />
+                    <Metric
+                      title="facttest_score"
+                      value={result.facttest_features?.facttest_score}
+                    />
                   </div>
-                ))}
-              </div>
+
+                  <div className="facttest-card nested">
+                    <h3>기준별 내부 검정 결과</h3>
+                    <div className="alpha-grid">
+                      {result.facttest.map((item) => (
+                        <div className="alpha-card" key={item.alpha}>
+                          <div className="alpha-top">
+                            <span>alpha = {item.alpha}</span>
+                            <span
+                              className={
+                                item.decision === "ACCEPT"
+                                  ? "badge accept"
+                                  : "badge abstain"
+                              }
+                            >
+                              {item.decision === "ACCEPT" ? "수용" : "보류"}
+                            </span>
+                          </div>
+
+                          <div className="score-line">
+                            <p>score</p>
+                            <strong>{item.score}</strong>
+                          </div>
+
+                          <p className="tau">tau: {item.tau}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             <p className="disclaimer">
