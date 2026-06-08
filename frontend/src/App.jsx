@@ -85,13 +85,11 @@ function App() {
   const isAccepted = primaryFacttest?.decision === "ACCEPT";
   const predictionClass = result?.prediction === "REAL" ? "real" : "fake";
 
-  const userDecisionText = isAccepted
-    ? "답변을 수용합니다."
-    : "답변을 보류합니다.";
+  const userDecisionText = isAccepted ? "결과 제공 가능" : "결과 제공 보류";
 
   const userDecisionDescription = isAccepted
-    ? "선택한 기준에서 AI 답변을 제공해도 된다고 판단했습니다."
-    : "선택한 기준에서 AI 답변을 바로 제공하기 어렵다고 판단했습니다.";
+    ? "선택한 기준에서 AI의 최종 예측을 제공해도 된다고 판단했습니다."
+    : "선택한 기준에서 AI의 최종 예측을 바로 제공하기 어렵다고 판단했습니다.";
 
   const predictionText =
     result?.prediction === "REAL" ? "사실 기반 가능성 높음" : "허위 정보 가능성 높음";
@@ -101,8 +99,8 @@ function App() {
       <header className="topbar">
         <div className="brand-icon">✓</div>
         <div>
-          <h1>FactGuard</h1>
-          <p>Korean YouTube Fake News Detector</p>
+          <h1>한국어 유튜브 허위정보 판별 시스템</h1>
+          <p>AI 기반 허위정보 탐지 및 신뢰성 검정</p>
         </div>
       </header>
 
@@ -127,8 +125,8 @@ function App() {
             <div className="shield">🛡</div>
             <h2>영상을 분석해보세요</h2>
             <p>
-              YouTube URL을 입력하면 AI가 여러 번 판단하고, 신뢰도 기준을
-              적용해 답변 제공 여부를 먼저 결정합니다.
+              YouTube URL을 입력하면 AI가 여러 번 판단하고, 신뢰도 기준을 적용해
+              결과 제공 여부를 먼저 결정합니다.
             </p>
           </section>
         )}
@@ -137,16 +135,14 @@ function App() {
           <section className="empty-state">
             <div className="loader" />
             <h2>분석 중입니다</h2>
-            <p>
-              자막 추출, AI 반복 판단, 신뢰도 검정을 수행하고 있습니다.
-            </p>
+            <p>자막 추출, AI 반복 판단, 신뢰도 검정을 수행하고 있습니다.</p>
           </section>
         )}
 
         {result && (
           <section className="results">
             <div className="feature-card">
-              <h3>답변 제공 기준 선택</h3>
+              <h3 className="section-title">답변 제공 기준 선택</h3>
               <div className="alpha-grid three-options">
                 {alphaOptions.map((option) => (
                   <button
@@ -177,21 +173,21 @@ function App() {
               <div className="prediction-left">
                 <div className="prediction-icon">{isAccepted ? "✓" : "!"}</div>
                 <div>
-                  <p className="small-label">AI 답변 제공 여부</p>
+                  <h3 className="section-title">AI 결과 제공 여부</h3>
                   <h2>{userDecisionText}</h2>
                   <p className="muted">{userDecisionDescription}</p>
                 </div>
               </div>
 
               <div className="prediction-right">
-                <p className="small-label">선택한 기준</p>
+                <p className="result-side-label">선택한 기준</p>
                 <strong>{selectedOption.label}</strong>
               </div>
             </div>
 
             {!isAccepted && (
               <div className="reason-card">
-                <p className="small-label">판정 보류 안내</p>
+                <h3 className="section-title">결과 제공 보류 안내</h3>
                 <p>
                   이 영상은 현재 선택한 기준에서 AI의 최종 예측을 바로 신뢰하기
                   어렵다고 판단되어 결과 공개를 보류합니다. 아래에서 AI가 여러 번
@@ -202,10 +198,10 @@ function App() {
 
             {isAccepted && !showPrediction && (
               <div className="reason-card">
-                <p className="small-label">다음 단계</p>
+                <h3 className="section-title">다음 단계</h3>
                 <p>
-                  선택한 기준에서 AI 답변을 제공할 수 있다고 판단했습니다. 아래
-                  버튼을 누르면 최종 예측 결과를 확인할 수 있습니다.
+                  선택한 기준에서 AI의 최종 예측을 제공할 수 있다고 판단했습니다.
+                  아래 버튼을 누르면 최종 예측 결과를 확인할 수 있습니다.
                 </p>
                 <button
                   className="accordion-btn"
@@ -224,7 +220,7 @@ function App() {
                       {result.prediction === "REAL" ? "✓" : "!"}
                     </div>
                     <div>
-                      <p className="small-label">AI 최종 예측</p>
+                      <h3 className="section-title">AI 최종 예측</h3>
                       <h2>{predictionText}</h2>
                       <p className="muted">
                         {result.prediction === "REAL"
@@ -235,20 +231,20 @@ function App() {
                   </div>
 
                   <div className="prediction-right">
-                    <p className="small-label">Video ID</p>
+                    <p className="result-side-label">Video ID</p>
                     <strong>{result.video_id}</strong>
                   </div>
                 </div>
 
                 <div className="reason-card">
-                  <p className="small-label">대표 판단 이유</p>
+                  <h3 className="section-title">대표 판단 이유</h3>
                   <p>{result.representative_reason}</p>
                 </div>
 
-                <div className="metric-grid">
-                  <Metric title="FAKE 비율" value={result.p0} />
-                  <Metric title="REAL 비율" value={result.p1} />
-                  <Metric title="신뢰도" value={result.confidence} />
+                <div className="metric-grid public-metrics">
+                  <Metric title="허위 가능성 비율" value={result.p0} />
+                  <Metric title="사실 기반 비율" value={result.p1} />
+                  <Metric title="AI 판단 신뢰도" value={result.confidence} />
                 </div>
               </>
             )}
@@ -292,7 +288,7 @@ function App() {
 
               {showTechInfo && (
                 <>
-                  <div className="metric-grid three">
+                  <div className="metric-grid three tech-metrics">
                     <Metric
                       title="answer_entropy"
                       value={result.facttest_features?.answer_entropy}
