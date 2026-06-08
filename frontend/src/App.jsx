@@ -11,7 +11,7 @@ const alphaOptions = [
   },
   {
     label: "엄격",
-    value: 0.1,
+    value: 0.15,
     description: "신뢰성과 답변 공개율의 균형을 맞춥니다.",
   },
   {
@@ -135,6 +135,7 @@ function App() {
                 {alphaOptions.map((option) => (
                   <button
                     key={option.value}
+                    type="button"
                     className={
                       selectedAlpha === option.value
                         ? "alpha-card selected"
@@ -189,10 +190,9 @@ function App() {
               <div className="reason-card">
                 <p className="small-label">판정 보류 안내</p>
                 <p>
-                  이 영상은 Qwen의 REAL/FAKE 예측을 신뢰하기 어렵다고 판단되어
-                  최종 예측 결과를 공개하지 않습니다. FACTTEST의 목적은 모델의
-                  답변을 무조건 제공하는 것이 아니라, 신뢰 가능한 경우에만
-                  답변을 수용하는 것입니다.
+                  이 영상은 Qwen의 최종 REAL/FAKE 예측을 신뢰하기 어렵다고
+                  판단되어 최종 예측 결과를 공개하지 않습니다. 다만 아래에서
+                  Qwen이 7회 생성한 개별 판단과 reasoning은 확인할 수 있습니다.
                 </p>
               </div>
             )}
@@ -255,6 +255,34 @@ function App() {
               </>
             )}
 
+            <div className="reason-list-card">
+              <button
+                className="accordion-btn"
+                onClick={() => setExpanded(!expanded)}
+              >
+                Qwen 7회 개별 판단과 reasoning 보기 {expanded ? "▲" : "▼"}
+              </button>
+
+              {expanded && (
+                <ol className="reason-list">
+                  {result.all_outputs.map((item, idx) => (
+                    <li key={idx}>
+                      <span className="reason-index">{idx + 1}</span>
+                      <div>
+                        <strong>
+                          {item.label_name}{" "}
+                          {item.answer !== undefined && item.answer !== null
+                            ? `(answer=${item.answer})`
+                            : ""}
+                        </strong>
+                        <p>{item.reason}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </div>
+
             <div className="feature-card">
               <h3>FACTTEST Features</h3>
               <div className="metric-grid three">
@@ -310,31 +338,6 @@ function App() {
                 ))}
               </div>
             </div>
-
-            {isAccepted && showPrediction && (
-              <div className="reason-list-card">
-                <button
-                  className="accordion-btn"
-                  onClick={() => setExpanded(!expanded)}
-                >
-                  Qwen 7회 reasoning 보기 {expanded ? "▲" : "▼"}
-                </button>
-
-                {expanded && (
-                  <ol className="reason-list">
-                    {result.all_outputs.map((item, idx) => (
-                      <li key={idx}>
-                        <span className="reason-index">{idx + 1}</span>
-                        <div>
-                          <strong>{item.label_name}</strong>
-                          <p>{item.reason}</p>
-                        </div>
-                      </li>
-                    ))}
-                  </ol>
-                )}
-              </div>
-            )}
 
             <p className="disclaimer">
               ⚠️ 이 분석 결과는 AI 기반 자동 판별 시스템에 의해 생성되었습니다.
