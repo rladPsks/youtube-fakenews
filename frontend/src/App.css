@@ -450,3 +450,12 @@ body {
   transform: translateY(-2px);
   border-color: rgba(134, 239, 172, 0.3);
 }
+
+.alpha-grid.three-options {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.facttest-card.nested {
+  margin-top: 18px;
+  box-shadow: none;
+}
