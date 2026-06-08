@@ -174,8 +174,8 @@ function App() {
                 <div className="prediction-icon">{isAccepted ? "✓" : "!"}</div>
                 <div>
                   <h3 className="section-title">AI 결과 제공 여부</h3>
-                  <h2>{userDecisionText}</h2>
-                  <p className="muted">{userDecisionDescription}</p>
+                  <h2 className="result-main-text">{userDecisionText}</h2>
+                  <p className="result-description">{userDecisionDescription}</p>
                 </div>
               </div>
 
@@ -221,18 +221,13 @@ function App() {
                     </div>
                     <div>
                       <h3 className="section-title">AI 최종 예측</h3>
-                      <h2>{predictionText}</h2>
-                      <p className="muted">
+                      <h2 className="result-main-text">{predictionText}</h2>
+                      <p className="result-description">
                         {result.prediction === "REAL"
                           ? "이 영상은 사실 기반 콘텐츠일 가능성이 높다고 판단했습니다."
                           : "이 영상은 허위 정보일 가능성이 높다고 판단했습니다."}
                       </p>
                     </div>
-                  </div>
-
-                  <div className="prediction-right">
-                    <p className="result-side-label">Video ID</p>
-                    <strong>{result.video_id}</strong>
                   </div>
                 </div>
 
