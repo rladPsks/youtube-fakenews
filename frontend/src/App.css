@@ -631,3 +631,70 @@ body {
     font-size: 16px;
   }
 }
+
+.show-result-btn {
+  margin-top: 18px;
+  border: none;
+  border-radius: 14px;
+  padding: 14px 24px;
+  background: var(--green);
+  color: #06130c;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.tech-note {
+  margin-left: 10px;
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.tech-explain {
+  margin-top: 18px;
+  margin-bottom: 18px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #0c0f15;
+  color: #cbd5e1;
+  line-height: 1.7;
+}
+
+.info-metric {
+  position: relative;
+}
+
+.metric-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.help-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  background: rgba(122, 162, 255, 0.15);
+  color: var(--blue);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.metric-direction {
+  margin: 8px 0 0;
+  color: var(--green);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.metric-description {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
