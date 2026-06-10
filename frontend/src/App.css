@@ -655,3 +655,48 @@ body {
     font-size: 30px;
   }
 }
+
+
+.tooltip-wrap {
+  position: relative;
+  display: inline-flex;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.tooltip-box {
+  position: absolute;
+  left: 50%;
+  bottom: 130%;
+  transform: translateX(-50%);
+  width: 260px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #0c0f15;
+  border: 1px solid var(--border);
+  color: #dbe4ef;
+  font-size: 13px;
+  line-height: 1.6;
+  text-align: left;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: 20;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+}
+
+.tooltip-wrap:hover .tooltip-box {
+  opacity: 1;
+  visibility: visible;
+}
+
+.tooltip-box::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  border-width: 7px;
+  border-style: solid;
+  border-color: #0c0f15 transparent transparent transparent;
+}
