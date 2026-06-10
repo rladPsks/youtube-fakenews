@@ -391,9 +391,9 @@ function InfoMetric({ title, value, direction, description }) {
       <strong>{value ?? "-"}</strong>
       <p className="metric-direction">{direction}</p>
 
-      <div className="metric-description-row">
+      <div className="tooltip-wrap">
         <span className="help-icon">?</span>
-        <p className="metric-description">{description}</p>
+        <span className="tooltip-box">{description}</span>
       </div>
     </div>
   );
