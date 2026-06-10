@@ -43,22 +43,18 @@ function App() {
     try {
       const response = await fetch(`${API_URL}/analyze`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url }),
       });
 
       if (!response.ok) {
         let message = "분석 요청 실패";
-
         try {
           const errorData = await response.json();
           message = errorData.detail || message;
         } catch {
           message = "서버 응답을 읽을 수 없습니다.";
         }
-
         throw new Error(message);
       }
 
@@ -85,6 +81,13 @@ function App() {
   const isAccepted = primaryFacttest?.decision === "ACCEPT";
   const predictionClass = result?.prediction === "REAL" ? "real" : "fake";
 
+  const allOutputs = Array.isArray(result?.all_outputs)
+    ? result.all_outputs
+    : [];
+
+  const realCount = allOutputs.filter((x) => x.label_name === "REAL").length;
+  const fakeCount = allOutputs.filter((x) => x.label_name === "FAKE").length;
+
   const userDecisionText = isAccepted ? "결과 제공 가능" : "결과 제공 보류";
 
   const userDecisionDescription = isAccepted
@@ -92,7 +95,9 @@ function App() {
     : "선택한 기준에서 AI의 최종 예측을 바로 제공하기 어렵다고 판단했습니다.";
 
   const predictionText =
-    result?.prediction === "REAL" ? "사실 기반일 가능성 높음" : "허위 정보일 가능성 높음";
+    result?.prediction === "REAL"
+      ? "사실 기반일 가능성 높음"
+      : "허위 정보일 가능성 높음";
 
   return (
     <div className="app">
@@ -143,6 +148,7 @@ function App() {
           <section className="results">
             <div className="feature-card">
               <h3 className="section-title">답변 제공 기준 선택</h3>
+
               <div className="alpha-grid three-options">
                 {alphaOptions.map((option) => (
                   <button
@@ -176,6 +182,15 @@ function App() {
                   <h3 className="section-title">AI 결과 제공 여부</h3>
                   <h2 className="result-main-text">{userDecisionText}</h2>
                   <p className="result-description">{userDecisionDescription}</p>
+
+                  {isAccepted && !showPrediction && (
+                    <button
+                      className="show-result-btn"
+                      onClick={() => setShowPrediction(true)}
+                    >
+                      AI 예측 결과 보기
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -193,22 +208,6 @@ function App() {
                   어렵다고 판단되어 결과 공개를 보류합니다. 아래에서 AI가 여러 번
                   판단한 상세 이유는 확인할 수 있습니다.
                 </p>
-              </div>
-            )}
-
-            {isAccepted && !showPrediction && (
-              <div className="reason-card">
-                <h3 className="section-title">다음 단계</h3>
-                <p>
-                  선택한 기준에서 AI의 최종 예측을 제공할 수 있다고 판단했습니다.
-                  아래 버튼을 누르면 최종 예측 결과를 확인할 수 있습니다.
-                </p>
-                <button
-                  className="accordion-btn"
-                  onClick={() => setShowPrediction(true)}
-                >
-                  AI 예측 결과 보기
-                </button>
               </div>
             )}
 
@@ -244,6 +243,13 @@ function App() {
             )}
 
             <div className="reason-list-card">
+              <h3 className="section-title">AI 반복 판단 요약</h3>
+
+              <div className="metric-grid public-metrics">
+                <Metric title="사실이라고 판단한 횟수" value={`${realCount}회`} />
+                <Metric title="허위라고 판단한 횟수" value={`${fakeCount}회`} />
+              </div>
+
               <button
                 className="accordion-btn"
                 onClick={() => setExpanded(!expanded)}
@@ -253,7 +259,7 @@ function App() {
 
               {expanded && (
                 <ol className="reason-list">
-                  {result.all_outputs.map((item, idx) => (
+                  {allOutputs.map((item, idx) => (
                     <li key={idx}>
                       <span className="reason-index">{idx + 1}</span>
                       <div>
@@ -282,23 +288,43 @@ function App() {
 
               {showTechInfo && (
                 <>
+                  <div className="tech-explain">
+                    <p>
+                      <strong>α(alpha)</strong>는 답변을 수용할 때 적용하는
+                      오류 허용 기준입니다. 값이 작을수록 더 엄격하게 판단하고,
+                      값이 클수록 더 많은 답변을 수용합니다.
+                    </p>
+                  </div>
+
                   <div className="metric-grid three tech-metrics">
-                    <Metric
-                      title="answer_entropy"
+                    <InfoMetric
+                      title="답변 불확실성"
                       value={result.facttest_features?.answer_entropy}
+                      direction="낮을수록 좋음"
+                      description="AI가 7번 판단했을 때 답변이 얼마나 흔들렸는지를 나타냅니다. 값이 낮을수록 같은 방향으로 일관되게 답했다는 뜻입니다."
                     />
-                    <Metric
-                      title="tfidf_reason_mean"
+
+                    <InfoMetric
+                      title="판단 이유 유사도"
                       value={result.facttest_features?.tfidf_reason_mean}
+                      direction="높을수록 좋음"
+                      description="AI가 여러 번 제시한 판단 이유들이 서로 얼마나 비슷한지를 나타냅니다. 값이 높을수록 판단 근거가 일관적입니다."
                     />
-                    <Metric
-                      title="facttest_score"
+
+                    <InfoMetric
+                      title="최종 신뢰 점수"
                       value={result.facttest_features?.facttest_score}
+                      direction="높을수록 좋음"
+                      description="답변 일관성과 판단 이유 유사도를 종합해 계산한 내부 점수입니다. 이 점수가 기준값을 넘으면 답변을 수용합니다."
                     />
                   </div>
 
                   <div className="facttest-card nested">
-                    <h3>기준별 내부 검정 결과</h3>
+                    <h3>
+                      기준별 내부 검정 결과
+                      <span className="tech-note">(연구용 지표)</span>
+                    </h3>
+
                     <div className="alpha-grid">
                       {result.facttest.map((item) => (
                         <div className="alpha-card" key={item.alpha}>
@@ -345,6 +371,20 @@ function Metric({ title, value }) {
     <div className="metric">
       <p>{title}</p>
       <strong>{value ?? "-"}</strong>
+    </div>
+  );
+}
+
+function InfoMetric({ title, value, direction, description }) {
+  return (
+    <div className="metric info-metric">
+      <div className="metric-title-row">
+        <p>{title}</p>
+        <span className="help-icon">?</span>
+      </div>
+      <strong>{value ?? "-"}</strong>
+      <p className="metric-direction">{direction}</p>
+      <p className="metric-description">{description}</p>
     </div>
   );
 }
