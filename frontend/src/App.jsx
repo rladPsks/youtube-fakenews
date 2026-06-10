@@ -49,12 +49,14 @@ function App() {
 
       if (!response.ok) {
         let message = "분석 요청 실패";
+
         try {
           const errorData = await response.json();
           message = errorData.detail || message;
         } catch {
           message = "서버 응답을 읽을 수 없습니다.";
         }
+
         throw new Error(message);
       }
 
@@ -182,15 +184,6 @@ function App() {
                   <h3 className="section-title">AI 결과 제공 여부</h3>
                   <h2 className="result-main-text">{userDecisionText}</h2>
                   <p className="result-description">{userDecisionDescription}</p>
-
-                  {isAccepted && !showPrediction && (
-                    <button
-                      className="show-result-btn"
-                      onClick={() => setShowPrediction(true)}
-                    >
-                      AI 예측 결과 보기
-                    </button>
-                  )}
                 </div>
               </div>
 
@@ -199,6 +192,22 @@ function App() {
                 <strong>{selectedOption.label}</strong>
               </div>
             </div>
+
+            {isAccepted && !showPrediction && (
+              <div className="show-result-card">
+                <h3 className="section-title">최종 예측 결과 확인</h3>
+                <p>
+                  선택한 기준에서 AI의 최종 예측을 제공할 수 있다고
+                  판단했습니다. 아래 버튼을 누르면 결과를 확인할 수 있습니다.
+                </p>
+                <button
+                  className="show-result-btn large"
+                  onClick={() => setShowPrediction(true)}
+                >
+                  AI 예측 결과 보기
+                </button>
+              </div>
+            )}
 
             {!isAccepted && (
               <div className="reason-card">
@@ -245,7 +254,7 @@ function App() {
             <div className="reason-list-card">
               <h3 className="section-title">AI 반복 판단 요약</h3>
 
-              <div className="metric-grid public-metrics">
+              <div className="metric-grid public-metrics summary-metrics">
                 <Metric title="사실이라고 판단한 횟수" value={`${realCount}회`} />
                 <Metric title="허위라고 판단한 횟수" value={`${fakeCount}회`} />
               </div>
@@ -290,9 +299,9 @@ function App() {
                 <>
                   <div className="tech-explain">
                     <p>
-                      <strong>α(alpha)</strong>는 답변을 수용할 때 적용하는
-                      오류 허용 기준입니다. 값이 작을수록 더 엄격하게 판단하고,
-                      값이 클수록 더 많은 답변을 수용합니다.
+                      <strong>α(alpha)</strong>는 답변을 수용할 때 적용하는 오류
+                      허용 기준입니다. 값이 작을수록 더 엄격하게 판단하고, 값이
+                      클수록 더 많은 답변을 수용합니다.
                     </p>
                   </div>
 
@@ -378,13 +387,14 @@ function Metric({ title, value }) {
 function InfoMetric({ title, value, direction, description }) {
   return (
     <div className="metric info-metric">
-      <div className="metric-title-row">
-        <p>{title}</p>
-        <span className="help-icon">?</span>
-      </div>
+      <p className="info-title">{title}</p>
       <strong>{value ?? "-"}</strong>
       <p className="metric-direction">{direction}</p>
-      <p className="metric-description">{description}</p>
+
+      <div className="metric-description-row">
+        <span className="help-icon">?</span>
+        <p className="metric-description">{description}</p>
+      </div>
     </div>
   );
 }
